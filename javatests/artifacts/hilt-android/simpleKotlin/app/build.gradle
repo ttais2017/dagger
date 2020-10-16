@@ -29,6 +29,7 @@ android {
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
+        testInstrumentationRunner "dagger.hilt.android.simpleKotlin.SimpleEmulatorTestRunner"
     }
     compileOptions {
         sourceCompatibility 1.8
@@ -37,14 +38,26 @@ android {
     testOptions {
         unitTests.includeAndroidResources = true
     }
+    sourceSets {
+        String sharedTestDir = 'src/sharedTest/java'
+        test {
+            java.srcDirs += sharedTestDir
+        }
+        androidTest {
+            java.srcDirs += sharedTestDir
+        }
+    }
 }
 
 hilt {
+    enableClasspathAggregation = true
     enableTransformForLocalTests = true
 }
 
 dependencies {
-    implementation fileTree(dir: "libs", include: ["*.jar"])
+    implementation project(':android-library')
+    implementation project(':kotlin-library')
+
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
 
@@ -54,9 +67,16 @@ dependencies {
     testImplementation 'com.google.truth:truth:1.0.1'
     testImplementation 'junit:junit:4.13'
     testImplementation 'org.robolectric:robolectric:4.3.1'
-    testImplementation 'androidx.core:core:1.1.0'
-    // TODO(bcorso): This multidex dep shouldn't be required -- it's a dep for the generated code.
-    testImplementation 'androidx.multidex:multidex:2.0.0'
-    testImplementation 'com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT'
-    kaptTest 'com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT'
+    testImplementation 'androidx.core:core:1.2.0'
+    testImplementation 'androidx.test.ext:junit:1.1.1'
+    testImplementation 'androidx.test:runner:1.2.0'
+    testImplementation "com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT"
+    kaptTest "com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT"
+
+    androidTestImplementation 'com.google.truth:truth:1.0.1'
+    androidTestImplementation 'junit:junit:4.13'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test:runner:1.2.0'
+    androidTestImplementation "com.google.dagger:hilt-android-testing:LOCAL-SNAPSHOT"
+    kaptAndroidTest "com.google.dagger:hilt-compiler:LOCAL-SNAPSHOT"
 }

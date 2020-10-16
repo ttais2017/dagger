@@ -20,12 +20,13 @@ import org.gradle.testkit.runner.GradleRunner
 import org.junit.rules.TemporaryFolder
 
 /**
- * Testing utility class that sets up a simple Android project that applies the transform plugin.
+ * Testing utility class that sets up a simple Android project that applies the Hilt plugin.
  */
-class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
+class GradleTestRunner(val tempFolder: TemporaryFolder) {
   private val dependencies = mutableListOf<String>()
   private val activities = mutableListOf<String>()
-
+  private val hiltOptions = mutableListOf<String>()
+  private var appClassName: String? = null
   private var buildFile: File? = null
   private var gradlePropertiesFile: File? = null
   private var manifestFile: File? = null
@@ -41,8 +42,13 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
   }
 
   // Adds an <activity> tag in the project's Android Manifest, e.g. "<activity name=".Foo"/>
-  fun addActivities(vararg deps: String) {
-    activities.addAll(deps)
+  fun addActivities(vararg activityElements: String) {
+    activities.addAll(activityElements)
+  }
+
+  // Adds 'hilt' options to the project's build.gradle, e.g. "enableClasspathAggregation = true"
+  fun addHiltOption(vararg options: String) {
+    hiltOptions.addAll(options)
   }
 
   // Adds a source package to the project. The package path is relative to 'src/main/java'.
@@ -60,6 +66,10 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
   fun addRes(resPath: String, resContent: String): File {
     File(tempFolder.root, "src/main/res/${resPath.substringBeforeLast(File.separator)}").mkdirs()
     return tempFolder.newFile("/src/main/res/$resPath").apply { writeText(resContent) }
+  }
+
+  fun setAppClassName(name: String) {
+    appClassName = name
   }
 
   // Executes a Gradle builds and expects it to succeed.
@@ -91,7 +101,7 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
             jcenter()
           }
           dependencies {
-            classpath 'com.android.tools.build:gradle:3.5.3'
+            classpath 'com.android.tools.build:gradle:4.1.0'
           }
         }
 
@@ -116,18 +126,32 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
           }
         }
 
-        repositories {
-          mavenLocal()
-          google()
-          jcenter()
+        allprojects {
+          repositories {
+            mavenLocal()
+            google()
+            jcenter()
+          }
         }
 
         dependencies {
           ${dependencies.joinToString(separator = "\n")}
         }
+        
+        ${getHiltOptionsClosure()}
         """.trimIndent()
       )
     }
+  }
+
+  private fun getHiltOptionsClosure() = if (hiltOptions.isNotEmpty()) {
+    """
+    hilt {
+      ${hiltOptions.joinToString(separator = "\n")}
+    }
+    """.trimIndent()
+  } else {
+    ""
   }
 
   private fun writeGradleProperties() {
@@ -149,6 +173,7 @@ class GradleTransformTestRunner(val tempFolder: TemporaryFolder) {
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="minimal">
             <application
+                android:name="${appClassName ?: "android.app.Application"}"
                 android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
                 ${activities.joinToString(separator = "\n")}
             </application>

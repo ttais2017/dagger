@@ -1,2 +1,6 @@
+include ':kotlin-library'
 rootProject.name='Simple Kotlin Hilt Android'
 include ':app'
+include ':android-library'
+include ':deep-android-lib'
+include ':deep-kotlin-lib'

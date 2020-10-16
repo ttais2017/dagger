@@ -48,6 +48,7 @@ android {
 }
 
 hilt {
+    enableClasspathAggregation = true
     enableTransformForLocalTests = true
 }
 
